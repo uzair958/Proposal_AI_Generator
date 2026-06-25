@@ -58,14 +58,15 @@ Ensure you provide at least your `GROQ_API_KEY`.
 
 ### 3. Create a Virtual Environment & Install Dependencies
 ```powershell
-# Create venv
-python -m venv .venv
+# install uv 
+pip install uv
+
+# sync dependencies
+uv sync
 
 # Activate venv
 .venv\Scripts\activate
 
-# Install requirements
-pip install -r requirements.txt
 ```
 
 ### 4. Initialize Database & Seed Qdrant Vector Store
