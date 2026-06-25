@@ -61,6 +61,7 @@ def process_transcript_file(
         slack_user_id=slack_user_id,
         channel_id=channel_id,
         text=transcript,
+        is_transcript=True,
     )
 
 
@@ -71,6 +72,7 @@ def process_user_message(
     slack_user_id: str,
     channel_id: str,
     text: str,
+    is_transcript: bool = False,
 ):
     logger.info(f"Received message from user {slack_user_id} in channel {channel_id}")
     db: Session = get_db()
@@ -84,7 +86,10 @@ def process_user_message(
         )
         logger.info(f"Resolved database session ID: {session.id} for session user ID: {session_slack_user_id}")
 
-        request_type = classify_request(text)
+        if is_transcript:
+            request_type = "proposal_generation"
+        else:
+            request_type = classify_request(text)
         logger.info(f"Classified request type as: '{request_type}'")
 
         # ======================================
