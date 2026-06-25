@@ -10,6 +10,7 @@ from app.database.repository import (
     get_latest_proposal_record,
     get_client_profile,
     get_messages,
+    delete_session,
 )
 
 from app.services.proposal_service import (
@@ -175,6 +176,22 @@ else:
             st.session_state.proposal = json.loads(proposal_record.proposal_json) if proposal_record else None
             st.session_state.docx_path = proposal_record.docx_path if proposal_record else None
             st.session_state.profile = profile_record if profile_record else None
+        finally:
+            db.close()
+        st.rerun()
+
+    # Session Deletion Option in sidebar
+    if st.sidebar.button("🗑️ Delete Session", use_container_width=True, type="secondary"):
+        db = get_db()
+        try:
+            delete_session(db, selected_session.id)
+            st.sidebar.success(f"Session {selected_session.id} deleted.")
+            # Reset active session state
+            st.session_state.active_session_id = None
+            st.session_state.active_session_user_id = ""
+            st.session_state.proposal = None
+            st.session_state.profile = None
+            st.session_state.docx_path = None
         finally:
             db.close()
         st.rerun()
@@ -400,10 +417,33 @@ elif page == "Revise Proposal":
                 "Revision completed"
             )
 
-            st.json(result)
-
         finally:
             db.close()
+
+    # If proposal exists, display it and offer download
+    if st.session_state.proposal:
+        st.subheader("Revised Proposal Sections")
+        proposal = st.session_state.proposal
+        if isinstance(proposal, dict):
+            for section, content in proposal.items():
+                with st.expander(section.replace("_", " ").title(), expanded=False):
+                    st.write(content)
+        else:
+            st.write(proposal)
+
+        docx_path = st.session_state.docx_path
+        if docx_path:
+            try:
+                with open(docx_path, "rb") as file:
+                    st.download_button(
+                        "⬇ Download Revised DOCX",
+                        data=file,
+                        file_name="revised_proposal.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True
+                    )
+            except Exception as e:
+                st.error(f"DOCX download error: {e}")
 
 
 # ===================================

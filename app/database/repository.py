@@ -434,4 +434,25 @@ def get_latest_proposal_record(
         .first()
     )
 
+
+def delete_session(
+    db: Session,
+    session_id: int,
+):
+    logger.info(f"delete_session called for session_id: {session_id}")
+    # Import locally to avoid potential circular dependencies
+    from app.database.models import ClientProfile
+
+    # Delete dependent entities first
+    db.query(Transcript).filter(Transcript.session_id == session_id).delete()
+    db.query(ProposalVersion).filter(ProposalVersion.session_id == session_id).delete()
+    db.query(Message).filter(Message.session_id == session_id).delete()
+    db.query(ClientProfile).filter(ClientProfile.session_id == session_id).delete()
+    
+    # Delete the session itself
+    db.query(SessionModel).filter(SessionModel.id == session_id).delete()
+    db.commit()
+    logger.info(f"Successfully deleted session: {session_id} and all related entities")
+
+
 
